@@ -184,7 +184,7 @@ class TaskScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatChip(
                   label: '$completed completed',
-                  color: const Color(0xFF059669),
+                  color: const Color(0xFF0D9488),
                 ),
               ],
             ),
