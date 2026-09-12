@@ -41,32 +41,43 @@ class ScheduleCard extends StatelessWidget {
                     style: theme.textTheme.p,
                   ),
                   const SizedBox(height: 4),
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
                     children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 14,
-                        color: theme.colorScheme.mutedForeground,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 14,
+                            color: theme.colorScheme.mutedForeground,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            schedule.day,
+                            style: theme.textTheme.small.copyWith(
+                              color: theme.colorScheme.mutedForeground,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        schedule.day,
-                        style: theme.textTheme.small.copyWith(
-                          color: theme.colorScheme.mutedForeground,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: theme.colorScheme.mutedForeground,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${schedule.startTime} - ${schedule.endTime}',
-                        style: theme.textTheme.small.copyWith(
-                          color: theme.colorScheme.mutedForeground,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: theme.colorScheme.mutedForeground,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${schedule.startTime} - ${schedule.endTime}',
+                            style: theme.textTheme.small.copyWith(
+                              color: theme.colorScheme.mutedForeground,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

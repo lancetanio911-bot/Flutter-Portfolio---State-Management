@@ -8,6 +8,8 @@ class Task {
   final DateTime? dueDate;
   final bool isCompleted;
 
+  static const Object _unset = Object();
+
   Task({
     required this.id,
     required this.title,
@@ -19,17 +21,19 @@ class Task {
 
   Task copyWith({
     String? title,
-    String? description,
+    Object? description = _unset,
     TaskPriority? priority,
-    DateTime? dueDate,
+    Object? dueDate = _unset,
     bool? isCompleted,
   }) {
     return Task(
       id: id,
       title: title ?? this.title,
-      description: description ?? this.description,
+      description: description == _unset
+          ? this.description
+          : (description as String?) ?? '',
       priority: priority ?? this.priority,
-      dueDate: dueDate ?? this.dueDate,
+      dueDate: dueDate == _unset ? this.dueDate : dueDate as DateTime?,
       isCompleted: isCompleted ?? this.isCompleted,
     );
   }
