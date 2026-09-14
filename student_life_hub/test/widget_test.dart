@@ -18,5 +18,6 @@ void main() {
     expect(find.text('Activity 2'), findsOneWidget);
     expect(find.text('Active Network Monitor'), findsOneWidget);
     expect(find.text('Open Activity'), findsWidgets);
+    expect(find.text('Add Activity'), findsNothing);
   });
 }
