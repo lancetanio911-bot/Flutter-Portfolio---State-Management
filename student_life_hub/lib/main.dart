@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:student_life_hub/models/activity.dart';
 import 'package:student_life_hub/providers/theme_provider.dart';
 import 'package:student_life_hub/screens/activity_detail_screen.dart';
 import 'package:student_life_hub/screens/home_screen.dart';

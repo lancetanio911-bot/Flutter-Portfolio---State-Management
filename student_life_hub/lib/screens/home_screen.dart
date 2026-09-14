@@ -4,12 +4,6 @@ import 'package:student_life_hub/models/activity.dart';
 import 'package:student_life_hub/providers/theme_provider.dart';
 import 'package:student_life_hub/widgets/activity_card.dart';
 
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:student_life_hub/models/activity.dart';
-import 'package:student_life_hub/providers/theme_provider.dart';
-import 'package:student_life_hub/widgets/activity_card.dart';
-
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
