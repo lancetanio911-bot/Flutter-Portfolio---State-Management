@@ -3,13 +3,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:student_life_hub/main.dart';
 
 void main() {
-  testWidgets('Home Dashboard renders correctly', (WidgetTester tester) async {
+  testWidgets('Flutter Portfolio dashboard renders correctly', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Student Life Hub'), findsOneWidget);
-    expect(find.text('Tasks Remaining'), findsOneWidget);
-    expect(find.text('Task Manager'), findsOneWidget);
-    expect(find.text('Class Schedule'), findsOneWidget);
+    expect(find.text('Flutter Portfolio'), findsOneWidget);
+    expect(
+      find.text('Master Compilation of Laboratory Activities'),
+      findsOneWidget,
+    );
+    expect(find.text('Laboratory Activities'), findsOneWidget);
+    expect(find.text('Activity 2'), findsOneWidget);
+    expect(find.text('Active Network Monitor'), findsOneWidget);
+    expect(find.text('Open Activity'), findsWidgets);
   });
 }

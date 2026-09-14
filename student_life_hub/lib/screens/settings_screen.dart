@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:student_life_hub/providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -11,106 +10,74 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late TextEditingController _nameController;
-  late TextEditingController _programController;
-
-  @override
-  void initState() {
-    super.initState();
-    final profile = context.read<ThemeProvider>();
-    _nameController = TextEditingController(text: profile.studentName);
-    _programController = TextEditingController(text: profile.studentProgram);
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _programController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
+    final themeProvider = context.watch<ThemeProvider>();
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.background,
-        surfaceTintColor: Colors.transparent,
+        title: const Text('Settings'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Settings', style: theme.textTheme.h3),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          ShadCard(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Student Profile',
-                    style: theme.textTheme.h4,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Personalize your app experience',
-                    style: theme.textTheme.muted,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Student Name',
-                        style: theme.textTheme.p,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  ShadInput(
-                    controller: _nameController,
-                    placeholder: const Text('Enter your name'),
-                    onChanged: (value) {
-                      context.read<ThemeProvider>().updateName(value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.school_outlined,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Program',
-                        style: theme.textTheme.p,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  ShadInput(
-                    controller: _programController,
-                    placeholder: const Text('e.g. BS Computer Science'),
-                    onChanged: (value) {
-                      context.read<ThemeProvider>().updateProgram(value);
-                    },
-                  ),
-                ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Appearance',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
               ),
-            ),
+              const SizedBox(height: 8),
+              Text(
+                'Choose the global theme for the whole application.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SegmentedButton<ThemeMode>(
+                    segments: const [
+                      ButtonSegment<ThemeMode>(
+                        value: ThemeMode.light,
+                        label: Text('Light'),
+                        icon: Icon(Icons.light_mode_outlined),
+                      ),
+                      ButtonSegment<ThemeMode>(
+                        value: ThemeMode.dark,
+                        label: Text('Dark'),
+                        icon: Icon(Icons.dark_mode_outlined),
+                      ),
+                    ],
+                    selected: {themeProvider.themeMode},
+                    onSelectionChanged: (Set<ThemeMode> selection) {
+                      if (selection.isNotEmpty) {
+                        themeProvider.setThemeMode(selection.first);
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 22),
+              const Text(
+                'About',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Flutter Portfolio is the master compilation app for future laboratory activities. New activities can be added as the course continues.',
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

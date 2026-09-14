@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:student_life_hub/providers/theme_provider.dart';
-import 'package:student_life_hub/providers/task_provider.dart';
-import 'package:student_life_hub/providers/schedule_provider.dart';
 import 'package:student_life_hub/screens/home_screen.dart';
-import 'package:student_life_hub/screens/task_screen.dart';
-import 'package:student_life_hub/screens/schedule_screen.dart';
+import 'package:student_life_hub/screens/network_monitor_screen.dart';
 import 'package:student_life_hub/screens/settings_screen.dart';
 
 void main() {
@@ -18,24 +14,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => TaskProvider()),
-        ChangeNotifierProvider(create: (_) => ScheduleProvider()),
-      ],
+    return ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
-          return ShadApp(
-            title: 'Student Life Hub',
+          return MaterialApp(
+            title: 'Flutter Portfolio',
+            debugShowCheckedModeBanner: false,
             themeMode: themeProvider.themeMode,
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
+            initialRoute: '/',
             routes: {
               '/': (context) => const HomeScreen(),
-              '/tasks': (context) => const TaskScreen(),
-              '/schedule': (context) => const ScheduleScreen(),
               '/settings': (context) => const SettingsScreen(),
+              '/activity-2': (context) => const NetworkMonitorScreen(),
             },
           );
         },

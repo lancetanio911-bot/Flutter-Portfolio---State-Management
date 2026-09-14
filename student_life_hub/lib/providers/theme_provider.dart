@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
-  String _studentName = 'Student';
-  String _studentProgram = '';
 
   ThemeMode get themeMode => _themeMode;
-  String get studentName => _studentName;
-  String get studentProgram => _studentProgram;
-
   bool get isDark => _themeMode == ThemeMode.dark;
 
   void toggleTheme() {
@@ -17,65 +11,59 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateName(String name) {
-    _studentName = name.isEmpty ? 'Student' : name;
+  void setThemeMode(ThemeMode mode) {
+    if (_themeMode == mode) {
+      return;
+    }
+    _themeMode = mode;
     notifyListeners();
   }
 
-  void updateProgram(String program) {
-    _studentProgram = program;
-    notifyListeners();
-  }
+  ThemeData get lightTheme => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: const Color(0xFFF7F5FF),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: const Color(0xFF7C6AE9),
+      brightness: Brightness.light,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      foregroundColor: Color(0xFF201A2F),
+      elevation: 0,
+    ),
+    cardTheme: CardThemeData(
+      color: Colors.white,
+      elevation: 0,
+      margin: const EdgeInsets.all(0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFFE7E2FF), width: 1),
+      ),
+    ),
+  );
 
-  ShadThemeData get lightTheme => ShadThemeData(
-        brightness: Brightness.light,
-        colorScheme: const ShadColorScheme(
-          background: Color(0xFFF0FDFB),
-          foreground: Color(0xFF0F1F1E),
-          card: Color(0xFFFFFFFF),
-          cardForeground: Color(0xFF0F1F1E),
-          popover: Color(0xFFFFFFFF),
-          popoverForeground: Color(0xFF0F1F1E),
-          primary: Color(0xFF0D9488),
-          primaryForeground: Color(0xFFFFFFFF),
-          secondary: Color(0xFFCCFBF1),
-          secondaryForeground: Color(0xFF065F46),
-          muted: Color(0xFFF0FDFB),
-          mutedForeground: Color(0xFF6B7280),
-          accent: Color(0xFFD1FAE5),
-          accentForeground: Color(0xFF065F46),
-          destructive: Color(0xFF14B8A6),
-          destructiveForeground: Color(0xFFFFFFFF),
-          border: Color(0xFFD1D5DB),
-          input: Color(0xFFD1D5DB),
-          ring: Color(0xFF0D9488),
-          selection: Color(0xFFCCFBF1),
-        ),
-      );
-
-  ShadThemeData get darkTheme => ShadThemeData(
-        brightness: Brightness.dark,
-        colorScheme: const ShadColorScheme(
-          background: Color(0xFF0C1B1A),
-          foreground: Color(0xFFD1F2EB),
-          card: Color(0xFF142C2A),
-          cardForeground: Color(0xFFD1F2EB),
-          popover: Color(0xFF142C2A),
-          popoverForeground: Color(0xFFD1F2EB),
-          primary: Color(0xFF5EEAD4),
-          primaryForeground: Color(0xFF0C1B1A),
-          secondary: Color(0xFF1A3C3A),
-          secondaryForeground: Color(0xFF99F6E4),
-          muted: Color(0xFF1E3836),
-          mutedForeground: Color(0xFF6B7280),
-          accent: Color(0xFF1A3C3A),
-          accentForeground: Color(0xFF99F6E4),
-          destructive: Color(0xFF14B8A6),
-          destructiveForeground: Color(0xFFFFFFFF),
-          border: Color(0xFF2D5250),
-          input: Color(0xFF2D5250),
-          ring: Color(0xFF5EEAD4),
-          selection: Color(0xFF2D5250),
-        ),
-      );
+  ThemeData get darkTheme => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    scaffoldBackgroundColor: const Color(0xFF171A2B),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: const Color(0xFF7C6AE9),
+      brightness: Brightness.dark,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      foregroundColor: Colors.white,
+      elevation: 0,
+    ),
+    cardTheme: CardThemeData(
+      color: const Color(0xFF1F2435),
+      elevation: 0,
+      margin: const EdgeInsets.all(0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFF2D3550), width: 1),
+      ),
+    ),
+  );
 }
