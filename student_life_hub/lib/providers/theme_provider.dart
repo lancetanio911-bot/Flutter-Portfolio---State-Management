@@ -24,7 +24,7 @@ class ThemeProvider extends ChangeNotifier {
     brightness: Brightness.light,
     scaffoldBackgroundColor: const Color(0xFFF7F5FF),
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF7C6AE9),
+      seedColor: const Color(0xFF14C7C1),
       brightness: Brightness.light,
     ),
     appBarTheme: const AppBarTheme(
@@ -48,7 +48,7 @@ class ThemeProvider extends ChangeNotifier {
     brightness: Brightness.dark,
     scaffoldBackgroundColor: const Color(0xFF171A2B),
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF7C6AE9),
+      seedColor: const Color(0xFF14C7C1),
       brightness: Brightness.dark,
     ),
     appBarTheme: const AppBarTheme(
