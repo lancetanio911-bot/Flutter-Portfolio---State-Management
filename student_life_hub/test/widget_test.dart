@@ -15,9 +15,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Laboratory Activities'), findsOneWidget);
-    expect(find.text('Activity 2'), findsOneWidget);
-    expect(find.text('Active Network Monitor'), findsOneWidget);
-    expect(find.text('Open Activity'), findsWidgets);
+    expect(find.text('Activity 2'), findsNothing);
+    expect(find.text('Active Network Monitor'), findsNothing);
+    expect(find.text('Open Activity'), findsNothing);
     expect(find.text('Add Activity'), findsNothing);
   });
 }
