@@ -64,7 +64,8 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
       setState(() {
         _requestState = RequestState.queued;
       });
-    } else if (_isOnline && !wasOnline &&
+    } else if (_isOnline &&
+        !wasOnline &&
         _requestState == RequestState.queued) {
       _resumeQueuedRequest();
     }
@@ -222,7 +223,8 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
                             ),
                           ),
                           FilledButton.icon(
-                            onPressed: _requestState == RequestState.processing ||
+                            onPressed:
+                                _requestState == RequestState.processing ||
                                     _requestState == RequestState.retrying
                                 ? null
                                 : _startRequest,
