@@ -46,16 +46,16 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 'This application serves as a compilation of our Flutter laboratory activities. New activities can be added as we progress through the course.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  height: 1.5,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(height: 1.5),
               ),
               const SizedBox(height: 28),
               Text(
                 'Laboratory Activities',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 16),
               LayoutBuilder(
@@ -79,7 +79,8 @@ class HomeScreen extends StatelessWidget {
                         activityNumber: activity.number,
                         title: activity.title,
                         description: activity.description,
-                        onTap: () => Navigator.pushNamed(context, activity.route),
+                        onTap: () =>
+                            Navigator.pushNamed(context, activity.route),
                       );
                     },
                   );
