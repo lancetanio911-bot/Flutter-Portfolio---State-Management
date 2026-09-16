@@ -59,8 +59,11 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
       _connection = connection;
     });
 
-    if (!_isOnline && _requestState == RequestState.processing) {
+    if (!_isOnline &&
+        (_requestState == RequestState.processing ||
+            _requestState == RequestState.retrying)) {
       _requestTimer?.cancel();
+      _retryTimer?.cancel();
       setState(() {
         _requestState = RequestState.queued;
       });
