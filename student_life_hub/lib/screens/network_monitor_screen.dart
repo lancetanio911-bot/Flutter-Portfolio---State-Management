@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:wifi_iot/wifi_iot.dart';
 
 enum RequestState { ready, processing, queued, retrying, completed }
 
@@ -25,6 +26,8 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
   Timer? _requestTimer;
   Timer? _retryTimer;
   List<ConnectivityResult> _connection = const [ConnectivityResult.none];
+  bool _wifiEnabled = true;
+  bool _wifiUpdating = false;
   final List<_NetworkRequest> _pendingRequests = [];
   _NetworkRequest? _activeRequest;
   _NetworkRequest? _displayedRequest;
@@ -75,11 +78,43 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
     }
   }
 
+  Future<void> _toggleWifi(bool enabled) async {
+    setState(() {
+      _wifiUpdating = true;
+    });
+
+    try {
+      await WiFiForIoTPlugin.setEnabled(enabled);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _wifiEnabled = enabled;
+        _wifiUpdating = false;
+      });
+      await _readConnection();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _wifiUpdating = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to change Wi-Fi state.')),
+        );
+      }
+    }
+  }
+
   void _handleConnectionChange(List<ConnectivityResult> connection) {
+    final effectiveConnection = _wifiEnabled
+        ? connection
+        : connection
+              .where((result) => result != ConnectivityResult.wifi)
+              .toList();
     final previousNetwork = _networkType;
-    final nextNetwork = connection.contains(ConnectivityResult.wifi)
+    final nextNetwork = effectiveConnection.contains(ConnectivityResult.wifi)
         ? ConnectivityResult.wifi
-        : connection.contains(ConnectivityResult.mobile)
+        : effectiveConnection.contains(ConnectivityResult.mobile)
         ? ConnectivityResult.mobile
         : null;
     final handoverStarted =
@@ -88,7 +123,7 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
         previousNetwork != nextNetwork;
 
     setState(() {
-      _connection = connection;
+      _connection = effectiveConnection;
     });
 
     if (_activeRequest != null && (!_isOnline || handoverStarted)) {
@@ -257,6 +292,17 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Wi-Fi'),
+                          Switch(
+                            value: _wifiEnabled,
+                            onChanged: _wifiUpdating ? null : _toggleWifi,
                           ),
                         ],
                       ),
