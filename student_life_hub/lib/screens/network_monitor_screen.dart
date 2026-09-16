@@ -5,6 +5,13 @@ import 'package:flutter/material.dart';
 
 enum RequestState { ready, processing, queued, retrying, completed }
 
+class _NetworkRequest {
+  final int id;
+  RequestState state;
+
+  _NetworkRequest(this.id, this.state);
+}
+
 class NetworkMonitorScreen extends StatefulWidget {
   const NetworkMonitorScreen({super.key});
 
@@ -18,8 +25,10 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
   Timer? _requestTimer;
   Timer? _retryTimer;
   List<ConnectivityResult> _connection = const [ConnectivityResult.none];
-  RequestState _requestState = RequestState.ready;
-  int _requestId = 0;
+  final List<_NetworkRequest> _pendingRequests = [];
+  _NetworkRequest? _activeRequest;
+  _NetworkRequest? _displayedRequest;
+  int _nextRequestId = 1;
 
   bool get _isOnline => _connection.any(
     (result) =>
@@ -36,6 +45,19 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
     }
     return 'Offline';
   }
+
+  ConnectivityResult? get _networkType {
+    if (_connection.contains(ConnectivityResult.wifi)) {
+      return ConnectivityResult.wifi;
+    }
+    if (_connection.contains(ConnectivityResult.mobile)) {
+      return ConnectivityResult.mobile;
+    }
+    return null;
+  }
+
+  RequestState get _requestState =>
+      _displayedRequest?.state ?? RequestState.ready;
 
   @override
   void initState() {
@@ -54,63 +76,116 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
   }
 
   void _handleConnectionChange(List<ConnectivityResult> connection) {
-    final wasOnline = _isOnline;
+    final previousNetwork = _networkType;
+    final nextNetwork = connection.contains(ConnectivityResult.wifi)
+        ? ConnectivityResult.wifi
+        : connection.contains(ConnectivityResult.mobile)
+        ? ConnectivityResult.mobile
+        : null;
+    final handoverStarted =
+        previousNetwork != null &&
+        nextNetwork != null &&
+        previousNetwork != nextNetwork;
+
     setState(() {
       _connection = connection;
     });
 
-    if (!_isOnline &&
-        (_requestState == RequestState.processing ||
-            _requestState == RequestState.retrying)) {
-      _requestTimer?.cancel();
+    if (_activeRequest != null && (!_isOnline || handoverStarted)) {
+      _queueActiveRequest();
+    }
+
+    if (_retryTimer != null && (!_isOnline || handoverStarted)) {
       _retryTimer?.cancel();
-      setState(() {
-        _requestState = RequestState.queued;
-      });
-    } else if (_isOnline &&
-        !wasOnline &&
-        _requestState == RequestState.queued) {
-      _resumeQueuedRequest();
+      _retryTimer = null;
+        final request = _pendingRequests.isNotEmpty
+          ? _pendingRequests.first
+          : null;
+      if (request != null) {
+        request.state = RequestState.queued;
+        setState(() {});
+      }
+    }
+
+    if (_isOnline && _activeRequest == null && _pendingRequests.isNotEmpty) {
+      _scheduleRetry();
     }
   }
 
   void _startRequest() {
-    _requestTimer?.cancel();
-    _retryTimer?.cancel();
-    _requestId++;
+    final request = _NetworkRequest(_nextRequestId++, RequestState.queued);
+    _displayedRequest = request;
 
     if (!_isOnline) {
+      _pendingRequests.add(request);
       setState(() {
-        _requestState = RequestState.queued;
+        request.state = RequestState.queued;
       });
       return;
     }
 
-    _beginProcessing(_requestId);
+    _beginProcessing(request);
   }
 
-  void _beginProcessing(int requestId) {
+  void _beginProcessing(_NetworkRequest request) {
+    if (!_isOnline) {
+      if (!_pendingRequests.contains(request)) {
+        _pendingRequests.add(request);
+      }
+      request.state = RequestState.queued;
+      setState(() {});
+      return;
+    }
+
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _activeRequest = request;
     setState(() {
-      _requestState = RequestState.processing;
+      request.state = RequestState.processing;
     });
     _requestTimer = Timer(const Duration(seconds: 8), () {
-      if (!mounted || requestId != _requestId || !_isOnline) {
+      if (!mounted || _activeRequest != request || !_isOnline) {
         return;
       }
+      _pendingRequests.remove(request);
+      _activeRequest = null;
       setState(() {
-        _requestState = RequestState.completed;
+        request.state = RequestState.completed;
       });
+      _scheduleRetry();
     });
   }
 
-  void _resumeQueuedRequest() {
-    final requestId = _requestId;
+  void _queueActiveRequest() {
+    final request = _activeRequest;
+    if (request == null) {
+      return;
+    }
+
+    _requestTimer?.cancel();
+    _requestTimer = null;
+    _activeRequest = null;
+    if (!_pendingRequests.contains(request)) {
+      _pendingRequests.add(request);
+    }
+    request.state = RequestState.queued;
+    setState(() {});
+  }
+
+  void _scheduleRetry() {
+    if (_retryTimer != null || !_isOnline || _pendingRequests.isEmpty) {
+      return;
+    }
+
+    final request = _pendingRequests.first;
+    _displayedRequest = request;
     setState(() {
-      _requestState = RequestState.retrying;
+      request.state = RequestState.retrying;
     });
     _retryTimer = Timer(const Duration(seconds: 1), () {
-      if (mounted && requestId == _requestId && _isOnline) {
-        _beginProcessing(requestId);
+      _retryTimer = null;
+      if (mounted && _isOnline && _pendingRequests.contains(request)) {
+        _beginProcessing(request);
       }
     });
   }
@@ -121,6 +196,11 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
     _requestTimer?.cancel();
     _retryTimer?.cancel();
     super.dispose();
+  }
+
+  String get _requestStateLabel {
+    final state = _requestState;
+    return state.name[0].toUpperCase() + state.name.substring(1);
   }
 
   @override
@@ -153,7 +233,11 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        _isOnline ? Icons.wifi : Icons.wifi_off,
+                        _networkType == ConnectivityResult.mobile
+                            ? Icons.signal_cellular_alt
+                            : _isOnline
+                            ? Icons.wifi
+                            : Icons.wifi_off,
                         size: 34,
                         color: _isOnline
                             ? theme.colorScheme.primary
@@ -201,6 +285,22 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Text(
+                            'Pending requests',
+                            style: theme.textTheme.labelLarge,
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${_pendingRequests.length}',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       Wrap(
                         alignment: WrapAlignment.spaceBetween,
                         crossAxisAlignment: WrapCrossAlignment.center,
@@ -217,8 +317,7 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              _requestState.name[0].toUpperCase() +
-                                  _requestState.name.substring(1),
+                              _requestStateLabel,
                               style: TextStyle(
                                 color: theme.colorScheme.onPrimaryContainer,
                                 fontWeight: FontWeight.w700,
@@ -227,8 +326,8 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
                           ),
                           FilledButton.icon(
                             onPressed:
-                                _requestState == RequestState.processing ||
-                                    _requestState == RequestState.retrying
+                              _activeRequest != null ||
+                                _requestState == RequestState.retrying
                                 ? null
                                 : _startRequest,
                             icon: const Icon(Icons.play_arrow),
