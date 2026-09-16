@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:student_life_hub/models/activity.dart';
 import 'package:student_life_hub/providers/theme_provider.dart';
 import 'package:student_life_hub/screens/activity_detail_screen.dart';
 import 'package:student_life_hub/screens/home_screen.dart';
@@ -29,7 +30,9 @@ class MyApp extends StatelessWidget {
             routes: {
               '/': (context) => const HomeScreen(),
               '/settings': (context) => const SettingsScreen(),
-              '/activity-detail': (context) => const ActivityDetailScreen(),
+              '/activity-detail': (context) => ActivityDetailScreen(
+                activity: ActivityItem.activityList.first,
+              ),
               '/network-monitor': (context) => const NetworkMonitorScreen(),
             },
           );
