@@ -133,7 +133,7 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
     if (_retryTimer != null && (!_isOnline || handoverStarted)) {
       _retryTimer?.cancel();
       _retryTimer = null;
-        final request = _pendingRequests.isNotEmpty
+      final request = _pendingRequests.isNotEmpty
           ? _pendingRequests.first
           : null;
       if (request != null) {
@@ -372,8 +372,8 @@ class _NetworkMonitorScreenState extends State<NetworkMonitorScreen> {
                           ),
                           FilledButton.icon(
                             onPressed:
-                              _activeRequest != null ||
-                                _requestState == RequestState.retrying
+                                _activeRequest != null ||
+                                    _requestState == RequestState.retrying
                                 ? null
                                 : _startRequest,
                             icon: const Icon(Icons.play_arrow),
