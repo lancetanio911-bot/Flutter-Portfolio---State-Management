@@ -60,29 +60,24 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final crossAxisCount = constraints.maxWidth > 700 ? 2 : 1;
+                  const spacing = 16.0;
+                  final cardWidth = (constraints.maxWidth - spacing) / 2;
 
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: activities.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: crossAxisCount == 1 ? 1.9 : 1.45,
-                    ),
-                    itemBuilder: (context, index) {
-                      final activity = activities[index];
-
-                      return ActivityCard(
-                        activityNumber: activity.number,
-                        title: activity.title,
-                        description: activity.description,
-                        onTap: () =>
-                            Navigator.pushNamed(context, activity.route),
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: activities.map((activity) {
+                      return SizedBox(
+                        width: cardWidth,
+                        child: ActivityCard(
+                          activityNumber: activity.number,
+                          title: activity.title,
+                          summary: activity.summary,
+                          onTap: () =>
+                              Navigator.pushNamed(context, activity.route),
+                        ),
                       );
-                    },
+                    }).toList(),
                   );
                 },
               ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:student_life_hub/models/activity.dart';
+import 'package:student_life_hub/providers/network_diagnostic_provider.dart';
 import 'package:student_life_hub/providers/theme_provider.dart';
 import 'package:student_life_hub/screens/activity_detail_screen.dart';
 import 'package:student_life_hub/screens/home_screen.dart';
+import 'package:student_life_hub/screens/network_diagnostic_dashboard_screen.dart';
 import 'package:student_life_hub/screens/network_monitor_screen.dart';
 import 'package:student_life_hub/screens/settings_screen.dart';
 
@@ -16,8 +18,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => NetworkDiagnosticProvider()),
+      ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
           return MaterialApp(
@@ -34,6 +39,8 @@ class MyApp extends StatelessWidget {
                 activity: ActivityItem.activityList.first,
               ),
               '/network-monitor': (context) => const NetworkMonitorScreen(),
+              '/network-diagnostic': (context) =>
+                  const NetworkDiagnosticDashboardScreen(),
             },
           );
         },
