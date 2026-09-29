@@ -30,5 +30,13 @@ class ActivityItem {
       summary: 'Network diagnostics',
       route: '/network-diagnostic',
     ),
+    ActivityItem(
+      number: 'Activity 4',
+      title: 'Local Mesh Chat',
+      description:
+          'Discover nearby Android devices and exchange text messages directly over a peer-to-peer connection without internet or a central server.',
+      summary: 'Offline peer-to-peer messaging',
+      route: '/local-mesh-chat',
+    ),
   ];
 }

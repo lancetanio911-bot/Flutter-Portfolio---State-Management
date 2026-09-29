@@ -5,6 +5,7 @@ import 'package:student_life_hub/providers/network_diagnostic_provider.dart';
 import 'package:student_life_hub/providers/theme_provider.dart';
 import 'package:student_life_hub/screens/activity_detail_screen.dart';
 import 'package:student_life_hub/screens/home_screen.dart';
+import 'package:student_life_hub/screens/local_mesh_chat_screen.dart';
 import 'package:student_life_hub/screens/network_diagnostic_dashboard_screen.dart';
 import 'package:student_life_hub/screens/network_monitor_screen.dart';
 import 'package:student_life_hub/screens/settings_screen.dart';
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
               '/network-monitor': (context) => const NetworkMonitorScreen(),
               '/network-diagnostic': (context) =>
                   const NetworkDiagnosticDashboardScreen(),
+                '/local-mesh-chat': (context) => const LocalMeshChatScreen(),
             },
           );
         },
