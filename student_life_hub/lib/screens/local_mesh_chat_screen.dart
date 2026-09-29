@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nearby_connections/nearby_connections.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:student_life_hub/services/nearby_chat_permission_service.dart';
 
 enum _ChatConnectionState {
   disconnected,
@@ -32,17 +31,17 @@ class LocalMeshChatScreen extends StatefulWidget {
 
 class _LocalMeshChatScreenState extends State<LocalMeshChatScreen> {
   static const _serviceId = 'com.example.student_life_hub';
-  static const _deviceName = 'Student Life Hub';
 
   final Nearby _nearby = Nearby();
+  final NearbyChatPermissionService _permissionService =
+      NearbyChatPermissionService();
   final Map<String, String> _nearbyDevices = {};
   final List<_ChatMessage> _messages = [];
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _messageScrollController = ScrollController();
 
-  _ChatConnectionState _connectionState =
-      _ChatConnectionState.disconnected;
-  String _localDeviceName = _deviceName;
+  _ChatConnectionState _connectionState = _ChatConnectionState.disconnected;
+  String _localDeviceName = NearbyChatPermissionService.fallbackDeviceName;
   String? _endpointId;
   String? _connectedDeviceName;
   String? _errorMessage;
@@ -90,37 +89,7 @@ class _LocalMeshChatScreenState extends State<LocalMeshChatScreen> {
 
     var isAdvertising = false;
     try {
-      final androidInfo = await DeviceInfoPlugin().androidInfo;
-        _localDeviceName = androidInfo.model.trim().isEmpty
-          ? _deviceName
-          : androidInfo.model;
-      final sdkInt = androidInfo.version.sdkInt;
-      final permissions = <Permission>[];
-      if (sdkInt <= 30) {
-        permissions.add(Permission.location);
-      }
-      if (sdkInt >= 31) {
-        permissions.addAll([
-          Permission.bluetoothAdvertise,
-          Permission.bluetoothConnect,
-          Permission.bluetoothScan,
-        ]);
-      }
-      if (sdkInt >= 33) {
-        permissions.add(Permission.nearbyWifiDevices);
-      }
-
-      final permissionResults = await permissions.request();
-      if (permissionResults.values.any((status) => !status.isGranted)) {
-        throw StateError(
-          'Allow Nearby devices and Bluetooth permissions to discover nearby devices. '
-          'If you denied a permission permanently, enable it in Android Settings.',
-        );
-      }
-      if (sdkInt <= 30 &&
-          !await Permission.location.serviceStatus.isEnabled) {
-        throw StateError('Turn on Location services to discover nearby devices.');
-      }
+      _localDeviceName = await _permissionService.requestAndGetDeviceName();
 
       isAdvertising = await _nearby.startAdvertising(
         _localDeviceName,
@@ -434,179 +403,188 @@ class _LocalMeshChatScreenState extends State<LocalMeshChatScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+            _buildHeader(theme, isConnected),
+            Expanded(child: _buildChatBody(theme, isConnected)),
+            _buildMessageComposer(isConnected),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme, bool isConnected) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Local Mesh Chat',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildStatusCard(theme, isConnected),
+          if (!_isSupported) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Nearby Connections is supported on Android only.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+          ],
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+          ],
+          if (_nearbyDevices.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildNearbyDevices(theme, isConnected),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard(ThemeData theme, bool isConnected) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              isConnected ? Icons.link : Icons.bluetooth_searching,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Local Mesh Chat',
-                    style: theme.textTheme.headlineSmall?.copyWith(
+                    _connectedDeviceName ?? _statusLabel,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isConnected ? Icons.link : Icons.bluetooth_searching,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _connectedDeviceName ?? _statusLabel,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(_statusLabel),
-                              ],
-                            ),
-                          ),
-                          if (isConnected)
-                            IconButton(
-                              tooltip: 'Disconnect',
-                              onPressed: _disconnect,
-                              icon: const Icon(Icons.link_off),
-                            )
-                          else
-                            FilledButton.tonalIcon(
-                              onPressed: !_isSupported || _isStarting
-                                  ? null
-                                  : _isDiscovering
-                                  ? _stopNearby
-                                  : _startNearby,
-                              icon: _isStarting
-                                  ? const SizedBox.square(
-                                      dimension: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Icon(
-                                      _isDiscovering
-                                          ? Icons.stop
-                                          : Icons.radar,
-                                    ),
-                              label: Text(
-                                _isDiscovering ? 'Stop' : 'Find devices',
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (!_isSupported) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'Nearby Connections is supported on Android only.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
-                    ),
-                  ],
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _errorMessage!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
-                    ),
-                  ],
-                  if (_nearbyDevices.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      'Nearby devices',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      height: 112,
-                      child: ListView.separated(
-                        itemCount: _nearbyDevices.length,
-                        separatorBuilder: (context, index) =>
-                            const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final entry = _nearbyDevices.entries.elementAt(index);
-                          return ListTile(
-                            dense: true,
-                            leading: const Icon(Icons.smartphone),
-                            title: Text(entry.value),
-                            trailing: IconButton(
-                              tooltip: 'Connect to ${entry.value}',
-                              onPressed:
-                                  _connectionState ==
-                                          _ChatConnectionState.connecting ||
-                                      isConnected
-                                  ? null
-                                  : () => _requestConnection(
-                                      entry.key,
-                                      entry.value,
-                                    ),
-                              icon: const Icon(Icons.link),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                  Text(_statusLabel),
                 ],
               ),
             ),
-            Expanded(
-              child: isConnected
-                  ? _buildMessages(theme)
-                  : Center(
-                      child: Text(
-                        _connectionState == _ChatConnectionState.connecting
-                            ? 'Waiting for connection approval...'
-                            : 'Connect to a nearby device to start chatting.',
-                        style: theme.textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      enabled: isConnected,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: isConnected ? (_) => _sendMessage() : null,
-                      decoration: const InputDecoration(
-                        hintText: 'Message',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    tooltip: 'Send message',
-                    onPressed: isConnected ? _sendMessage : null,
-                    icon: const Icon(Icons.send),
-                  ),
-                ],
+            if (isConnected)
+              IconButton(
+                tooltip: 'Disconnect',
+                onPressed: _disconnect,
+                icon: const Icon(Icons.link_off),
+              )
+            else
+              FilledButton.tonalIcon(
+                onPressed: !_isSupported || _isStarting
+                    ? null
+                    : _isDiscovering
+                    ? _stopNearby
+                    : _startNearby,
+                icon: _isStarting
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(_isDiscovering ? Icons.stop : Icons.radar),
+                label: Text(_isDiscovering ? 'Stop' : 'Find devices'),
               ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNearbyDevices(ThemeData theme, bool isConnected) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Nearby devices',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 112,
+          child: ListView.separated(
+            itemCount: _nearbyDevices.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final entry = _nearbyDevices.entries.elementAt(index);
+              final canConnect =
+                  _connectionState != _ChatConnectionState.connecting &&
+                  !isConnected;
+              return ListTile(
+                dense: true,
+                leading: const Icon(Icons.smartphone),
+                title: Text(entry.value),
+                trailing: IconButton(
+                  tooltip: 'Connect to ${entry.value}',
+                  onPressed: canConnect
+                      ? () => _requestConnection(entry.key, entry.value)
+                      : null,
+                  icon: const Icon(Icons.link),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChatBody(ThemeData theme, bool isConnected) {
+    if (isConnected) return _buildMessages(theme);
+
+    final message = _connectionState == _ChatConnectionState.connecting
+        ? 'Waiting for connection approval...'
+        : 'Connect to a nearby device to start chatting.';
+    return Center(
+      child: Text(
+        message,
+        style: theme.textTheme.bodyMedium,
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildMessageComposer(bool isConnected) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              enabled: isConnected,
+              textInputAction: TextInputAction.send,
+              onSubmitted: isConnected ? (_) => _sendMessage() : null,
+              decoration: const InputDecoration(
+                hintText: 'Message',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            tooltip: 'Send message',
+            onPressed: isConnected ? _sendMessage : null,
+            icon: const Icon(Icons.send),
+          ),
+        ],
       ),
     );
   }
@@ -624,7 +602,9 @@ class _LocalMeshChatScreenState extends State<LocalMeshChatScreen> {
       itemBuilder: (context, index) {
         final message = _messages[index];
         return Align(
-          alignment: message.isMine ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: message.isMine
+              ? Alignment.centerRight
+              : Alignment.centerLeft,
           child: Container(
             constraints: const BoxConstraints(maxWidth: 300),
             margin: const EdgeInsets.symmetric(vertical: 4),
